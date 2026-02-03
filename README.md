@@ -10,8 +10,8 @@
 
 ## Demo
 
-*(Place your recorded GIF or screenshot here to show the tool in action)*
-![Demo Vibration](https://via.placeholder.com/800x400?text=Insert+Your+Demo+GIF+Here)
+<img width="1920" height="1080" alt="Capture d&#39;écran 2026-02-03 015102" src="https://github.com/user-attachments/assets/34711ce6-c637-4e36-b624-fa1c8faa6818" />
+
 
 ## What is it?
 
