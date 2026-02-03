@@ -19,15 +19,15 @@ Vibration Radar is a **non-contact metrology tool**. Unlike physical acceleromet
 
 Whether you are inspecting a bridge, checking a motor's alignment, or analyzing structural integrity, this tool turns your webcam into a precision sensor.
 
-## Key Features
+## Key features
 
-* ** Real-Time CPU Optimization:** Runs at 30+ FPS on standard processors thanks to a **Gaussian Pyramid** downsampling architecture. No expensive GPU required.
-* ** Farnebäck Optical Flow:** Uses dense vector field estimation to track pixel-level displacements.
-* ** Dynamic Heatmap:** visualizes vibration intensity using a JET colormap overlay.
-* ** HD HUD Interface:** Professional heads-up display with clean, anti-aliased text (Pillow rendering) over a high-definition video feed.
-* ** Session Recording:** Built-in video recorder to archive your inspections with data overlays (FPS, Sensitivity, Intensity).
+*  Real-Time CPU Optimization: Runs at 30+ FPS on standard processors thanks to a **Gaussian Pyramid** downsampling architecture. No expensive GPU required.
+*  Farnebäck Optical Flow: Uses dense vector field estimation to track pixel-level displacements.
+*  Dynamic Heatmap: visualizes vibration intensity using a JET colormap overlay.
+*  HD HUD Interface: Professional heads-up display with clean, anti-aliased text (Pillow rendering) over a high-definition video feed.
+*  Session Recording: Built-in video recorder to archive your inspections with data overlays (FPS, Sensitivity, Intensity).
 
-## 🛠️ Technology Stack
+## Technology stack
 
 This project is built with **Python** and relies on a deterministic Computer Vision pipeline:
 
@@ -49,7 +49,7 @@ This project is built with **Python** and relies on a deterministic Computer Vis
     pip install -r requirements.txt
     ```
 
-## How to Use
+## How to use
 
 Run the main script:
 ```bash
