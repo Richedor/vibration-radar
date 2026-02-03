@@ -54,3 +54,21 @@ This project is built with **Python** and relies on a deterministic Computer Vis
 Run the main script:
 ```bash
 python main.py
+```
+
+### Controls
+
+| Key | Action |
+| :--- | :--- |
+| **`+`** | Increase Sensitivity (Detect smaller vibrations) |
+| **`-`** | Decrease Sensitivity (Filter out noise) |
+| **`ESC`** | Quit the application |
+
+---
+
+## Author
+
+**© 2026 richedor**
+*Electronics & Computer Vision Enthusiast*
+
+> *"Engineering is about making the invisible, visible."*
