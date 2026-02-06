@@ -12,6 +12,7 @@
 
 <img width="1920" height="1080" alt="Capture d&#39;écran 2026-02-03 015102" src="https://github.com/user-attachments/assets/34711ce6-c637-4e36-b624-fa1c8faa6818" />
 
+![Adobe Express - Vibration_Report_2026-02-06_12-03-34](https://github.com/user-attachments/assets/e234c1c9-c6e5-4902-b476-858428a5d80c)
 
 ## What is it?
 
@@ -63,6 +64,11 @@ python main.py
 | **`+`** | Increase Sensitivity (Detect smaller vibrations) |
 | **`-`** | Decrease Sensitivity (Filter out noise) |
 | **`ESC`** | Quit the application |
+
+![Vibration_Report_2026-02-02_03-17-17](https://github.com/user-attachments/assets/cbb66103-0b16-4803-89f5-8584505f6783)
+
+![Adobe Express - Vibration_Report_2026-02-06_12-01-53(2)](https://github.com/user-attachments/assets/5f62631c-aeb9-4bc3-805a-d343a81cf11c)
+
 
 ---
 
