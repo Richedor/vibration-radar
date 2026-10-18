@@ -86,4 +86,4 @@ Tests : `python -m unittest discover tests`
 
 ---
 
-[richedor](https://github.com/Richedor), M2 TSI Image-Vision, Université Bourgogne Europe
+[richedor](https://github.com/Richedor)
