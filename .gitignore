@@ -12,3 +12,6 @@ build/
 .venv
 venv/
 ENV/
+
+# Videos de demonstration locales
+Vibration_Report_*.mp4
