@@ -2,19 +2,26 @@ import cv2
 import numpy as np
 import time
 import datetime
+from collections import deque
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageDraw, ImageFont
 from pre_processing import VideoProcessor
+from frequency_analyzer import FrequencyAnalyzer
 
 class RadarApp:
     def __init__(self):
         self.proc = VideoProcessor()
         self.sensitivity = 4
         self.project_name = "PROJET : DETECTION DE VIBRATION"
-        self.copyright = "© 2026 adecola"
+        self.copyright = "© 2026 richedor"
         self.source = None
         self.record_session = False # État de la case à cocher
+
+        # --- MESURE SUR UNE ZONE (touche Z) ---
+        self.roi_raw = None      # (x, y, w, h) dans l'image d'origine
+        self.analyzer = None
+        self.freq_result = None
         
         # --- POLICES HD ---
         try:
@@ -87,6 +94,43 @@ class RadarApp:
         draw.text(pos, text, font=font, fill=color)
         return cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
 
+    def draw_zone_panel(self, img, roi_hd):
+        x, y, w, h = roi_hd
+        cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 255), 2)
+
+        H, W = img.shape[:2]
+        pw, ph = 380, 150
+        x0, y0 = W - pw - 15, H - ph - 40
+        overlay = img.copy()
+        cv2.rectangle(overlay, (x0, y0), (x0 + pw, y0 + ph), (20, 20, 20), -1)
+        img[:] = cv2.addWeighted(overlay, 0.85, img, 0.15, 0)
+
+        r = self.freq_result
+        nyq = self.analyzer.nyquist
+        if r is None:
+            lines = ["Zone : acquisition...", f"Nyquist : {nyq:.1f} Hz"]
+        elif r["reliable"]:
+            lines = [f"FRÉQUENCE : {r['freq']:.2f} Hz",
+                     f"AMPLITUDE : {r['amplitude_px']:.3f} px   SNR {r['snr']:.0f}",
+                     f"Au-delà de {nyq:.1f} Hz : fréquence repliée"]
+        else:
+            lines = ["Pas de vibration nette", f"SNR {r['snr']:.1f} (seuil {self.analyzer.min_snr:.0f})",
+                     f"Nyquist : {nyq:.1f} Hz"]
+
+        # Mini spectre
+        if r is not None:
+            fr, sp = r["freqs"], r["spectrum"]
+            sx0, sy0, sw, sh = x0 + 10, y0 + 75, pw - 20, 65
+            sp_n = sp / (sp.max() + 1e-12)
+            pts = np.stack([sx0 + fr / nyq * sw, sy0 + sh - sp_n * sh], axis=1).astype(np.int32)
+            cv2.polylines(img, [pts], False, (0, 200, 255), 1, cv2.LINE_AA)
+            if r["reliable"]:
+                px = int(sx0 + r["freq"] / nyq * sw)
+                cv2.line(img, (px, sy0), (px, sy0 + sh), (0, 0, 255), 1)
+
+        for i, t in enumerate(lines):
+            img[:] = self.draw_text_hd(img, t, (x0 + 10, y0 + 8 + i * 22), self.font_info, self.COL_WHITE)
+
     def run_engine(self):
         if self.source is None: return
 
@@ -105,18 +149,40 @@ class RadarApp:
             # Le writer sera créé à la première frame pour avoir la bonne taille
 
         prev_time = 0
-        
+        # Base de temps : fps du fichier, ou fps mesurés pour la webcam
+        native_fps = cap.get(cv2.CAP_PROP_FPS) if is_file else 0
+        if not native_fps or native_fps <= 0:
+            native_fps = 30.0
+        stamps = deque(maxlen=256)
+        frame_idx = 0
+
         while True:
             ret, frame = cap.read()
             if not ret:
                 if is_file:
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     self.proc.prev_gray_small = None
+                    if self.analyzer: self.analyzer.reset()
+                    self.freq_result = None
                     continue
                 else: break
 
+            raw = frame
+            stamps.append(time.time())
+            frame_idx += 1
+
             # 1. Force HD (1280px)
             frame = self.resize_frame(frame, target_width=1280)
+            scale = raw.shape[1] / float(frame.shape[1])
+
+            # 1b. Mesure sur la zone, en pleine résolution
+            if self.roi_raw is not None:
+                x, y, w, h = self.roi_raw
+                self.analyzer.update(raw[y:y + h, x:x + w])
+                if not is_file and len(stamps) > 10:
+                    self.analyzer.fps = (len(stamps) - 1) / (stamps[-1] - stamps[0])
+                if frame_idx % 5 == 0:
+                    self.freq_result = self.analyzer.analyze()
 
             # 2. Analyse
             mag, visual_output = self.proc.get_vibration_map(frame, self.sensitivity)
@@ -148,6 +214,13 @@ class RadarApp:
                 visual_output = self.draw_text_hd(visual_output, self.copyright, (15, h - 25), self.font_info, self.COL_GREY)
                 visual_output = self.draw_text_hd(visual_output, f"FPS: {int(fps)}", (w - 80, 60), self.font_fps, (0, 255, 0))
 
+                if self.roi_raw is not None:
+                    x, y, w, h = self.roi_raw
+                    roi_hd = tuple(int(v / scale) for v in (x, y, w, h))
+                    self.draw_zone_panel(visual_output, roi_hd)
+                else:
+                    visual_output = self.draw_text_hd(visual_output, "Z : mesurer une zone", (15, 60), self.font_info, self.COL_GREY)
+
                 if self.record_session:
                     # Point rouge clignotant pour indiquer l'enregistrement
                     if int(curr_time * 2) % 2 == 0:
@@ -168,6 +241,14 @@ class RadarApp:
             if key == 27: break
             elif key == ord('+'): self.sensitivity += 2
             elif key == ord('-'): self.sensitivity = max(1, self.sensitivity - 2)
+            elif key in (ord('z'), ord('Z')):
+                sel = cv2.selectROI(window_name, frame, showCrosshair=True)
+                if sel[2] > 16 and sel[3] > 16:
+                    self.roi_raw = tuple(int(v * scale) for v in sel)
+                    self.analyzer = FrequencyAnalyzer(native_fps)
+                    self.freq_result = None
+            elif key in (ord('c'), ord('C')):
+                self.roi_raw, self.analyzer, self.freq_result = None, None, None
 
         if video_writer:
             video_writer.release()
